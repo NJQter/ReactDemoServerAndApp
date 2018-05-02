@@ -1,73 +1,86 @@
 import React, {Component} from 'react';
-import request from 'axios'
-import { BrowserRouter as Router,Route,Link } from 'react-router-dom';
+import TabBar from './TabBar';
+import request from 'axios';
+//import https from  'https';
+//import path from 'path';
+// import fs from 'fs';
+
+import $ from 'jquery';
+
+// let httpsConfig = {
+//     httpsAgent: new https.Agent({
+//         rejectUnauthorized: false
+//     })
+// }
+
 
 class App extends Component {
+
     constructor(props) {
         super(props)
         this.state = {
             tabList: null,
-            selectedIndex: 0
+            itemList: null
         }
+        // let privateKey  = fs.readFile(path.join(__dirname, './certificate/private.pem'), 'utf8');
+        // let certificate = fs.readFile(path.join(__dirname, './certificate/my.crt'), 'utf8');
+        // let credentials = {key: privateKey, cert: certificate};
     }
 
     componentDidMount() {
         let _url = 'http://172.31.38.78:3001/tabList'
         let that = this
 
-        request.get(_url, {}).then((response)=>{
-            that.setState({
-                tabList: response.data && response.data.tabList
-            })
-        }).catch((err)=> {
-            alert(err)
+        $.ajax({
+            type:'get',
+            url:_url,
+            success:function(res){
+                that.setState({
+                    tabList: res.tabList
+                });
+            }
         })
-    }
-
-    autoScroll(index) {
-        if (this.refs.tabBar && this.refs.tabBar.scrollTo) {
-           this.refs.tabBar.scroll(index * 100,0)
-        }
+        // request.get(_url, httpsConfig).then((response)=>{
+        //     that.setState({
+        //         tabList: response.data && response.data.tabList
+        //     })
+        // }).catch((err)=> {
+        //     alert(err)
+        // })
     }
 
     render() {
-        let that = this;
+        let that = this
         return (
             <div style={{position:'absolute',width:'100%',height:'100%',backgroundColor:'#f9f9f9'}}>
-                <div ref="tabBar" style={{display:'flex',height:44,backgroundColor:'#e5e5e5',whiteSpace:'nowrap',overflowX:'scroll'}}>
-                            {
-                                that.state.tabList && that.state.tabList.map((tab, index) => {
-                                    let isSelected = index === that.state.selectedIndex
-                                    let selectedStyle = isSelected ? styles.tabItemSelected : styles.tabItem
-                                    return (
-                                        <div key={index} style={selectedStyle} onClick={()=>{
-                                            if (that.state.selectedIndex !== index) {
-                                                that.setState({selectedIndex:index})
-                                            }
-                                        }}>
-                                            <div style={{paddingLeft:14,paddingRight:14}}>
-                                                <Link>{tab.name}</Link>
-                                            </div>
+                {
+                    this.state.tabList && <TabBar tabList={this.state.tabList} onTabItemClicked={(index)=>{
+                        let tab = that.state.tabList[index]
+                        let url = 'http://172.31.38.78:3001/itemList'
+                        request.get(url,{params:{tabId:tab.tabId}}).then((resp) => {
+                            that.setState({
+                                itemList:resp.data && resp.data.itemList
+                            })
+                        })
+                    }}/>
+                }
+                <div style={{display:'flex',flexDirection:'column'}}>
+                    {
+                        this.state.itemList && this.state.itemList.map((item, index) => {
+                            return (
+                                    <div key={index} style={{display:'flex',flexDirection:'row',justifyContent:'space-between',margin:9}}>
+                                        <div style={{display:'flex',flexDirection:'row'}}>
+                                            <div style={{color:'grey'}}>{index+1}，</div>
+                                            <a href="itms-services:///?action=download-manifest&url=https://172.31.38.78:3001/ipa/test.plist">{item.name}</a>
                                         </div>
-                                    )
-                                })
-                            }
+                                        <div style={{color:'grey'}}>{item.timestamp}</div>
+                                    </div>
+                            )
+                        })
+                    }
                 </div>
             </div>
         )
     }
 }
-
-const styles = {
-    tabItem: {
-        display:'flex',
-        alignItems:'center'
-    },
-    tabItemSelected: {
-        display:'flex',
-        alignItems:'center',
-        color:'#0c7f12'
-    }
-}
-
 export default App;
