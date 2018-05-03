@@ -7,8 +7,8 @@
 let app = require('../app');
 let debug = require('debug')('myapp:server');
 
-//let https = require('https');
-let http = require('http');
+// let https = require('https');
+ let http = require('http');
 let fs = require('fs');
 let path = require('path');
 
@@ -22,11 +22,11 @@ app.set('port', port);
 /**
  * Create HTTP server.
  */
-let privateKey  = fs.readFileSync(path.join(__dirname, './certificate/private.pem'), 'utf8');
-let certificate = fs.readFileSync(path.join(__dirname, './certificate/my.crt'), 'utf8');
+let privateKey  = fs.readFileSync(path.join(__dirname, './certificate/ca-key.pem'), 'utf8');
+let certificate = fs.readFileSync(path.join(__dirname, './certificate/ca-csr.pem'), 'utf8');
 let credentials = {key: privateKey, cert: certificate};
 
-//var server = https.createServer(credentials,app);
+// let server = https.createServer(credentials,app);
 let server = http.createServer(app);
 
 /**

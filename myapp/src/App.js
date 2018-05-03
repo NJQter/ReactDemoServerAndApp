@@ -5,7 +5,7 @@ import request from 'axios';
 //import path from 'path';
 // import fs from 'fs';
 
-import $ from 'jquery';
+//import $ from 'jquery';
 
 // let httpsConfig = {
 //     httpsAgent: new https.Agent({
@@ -28,18 +28,30 @@ class App extends Component {
     }
 
     componentDidMount() {
-        let _url = 'http://172.31.38.78:3001/tabList'
+        let _url = 'https://172.31.38.78:3001/tabList'
         let that = this
 
-        $.ajax({
-            type:'get',
-            url:_url,
-            success:function(res){
-                that.setState({
-                    tabList: res.tabList
-                });
-            }
-        })
+        const req = new XMLHttpRequest()
+        req.onload = function () {
+            let resp = JSON.parse(req.response)
+            that.setState({
+                tabList: resp.tabList
+            });
+        }
+        req.open('GET', _url)
+        //req.setRequestHeader('Content-Type', 'application/json;charset=UTF-8')
+        //req.setRequestHeader('authorization', localStorage.token)
+        req.send(null)
+
+        // $.ajax({
+        //     type:'get',
+        //     url:_url,
+        //     success:function(res){
+        //         that.setState({
+        //             tabList: res.tabList
+        //         });
+        //     }
+        // })
         // request.get(_url, httpsConfig).then((response)=>{
         //     that.setState({
         //         tabList: response.data && response.data.tabList
