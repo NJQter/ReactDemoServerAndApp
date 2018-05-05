@@ -1,18 +1,8 @@
 import React, {Component} from 'react';
 import TabBar from './TabBar';
-import request from 'axios';
-//import https from  'https';
-//import path from 'path';
-// import fs from 'fs';
+import axios from 'axios';
 
-//import $ from 'jquery';
-
-// let httpsConfig = {
-//     httpsAgent: new https.Agent({
-//         rejectUnauthorized: false
-//     })
-// }
-
+const _baseUrl = 'https://172.31.38.78:3002/'
 
 class App extends Component {
 
@@ -20,77 +10,75 @@ class App extends Component {
         super(props)
         this.state = {
             tabList: null,
-            itemList: null
+            itemList: null,
+            isError: false
         }
-        // let privateKey  = fs.readFile(path.join(__dirname, './certificate/private.pem'), 'utf8');
-        // let certificate = fs.readFile(path.join(__dirname, './certificate/my.crt'), 'utf8');
-        // let credentials = {key: privateKey, cert: certificate};
     }
 
     componentDidMount() {
-        let _url = 'https://172.31.38.78:3001/tabList'
+        let _url = _baseUrl + 'tabList'
         let that = this
-
-        const req = new XMLHttpRequest()
-        req.onload = function () {
-            let resp = JSON.parse(req.response)
+        axios.get(_url,{
+        }).then((resp) => {
             that.setState({
-                tabList: resp.tabList
-            });
-        }
-        req.open('GET', _url)
-        //req.setRequestHeader('Content-Type', 'application/json;charset=UTF-8')
-        //req.setRequestHeader('authorization', localStorage.token)
-        req.send(null)
+                isError: false,
+                tabList:resp.data && resp.data.tabList
+            })
+        }).catch((err) => {
+            that.setState({
+                isError:true
+            })
+        })
+    }
 
-        // $.ajax({
-        //     type:'get',
-        //     url:_url,
-        //     success:function(res){
-        //         that.setState({
-        //             tabList: res.tabList
-        //         });
-        //     }
-        // })
-        // request.get(_url, httpsConfig).then((response)=>{
-        //     that.setState({
-        //         tabList: response.data && response.data.tabList
-        //     })
-        // }).catch((err)=> {
-        //     alert(err)
-        // })
+    topTabBarView() {
+        let that = this
+        return (
+            <div>
+            {
+                this.state.tabList &&
+                <TabBar tabList={this.state.tabList} onTabItemClicked={(index)=>{
+                    let tab = that.state.tabList[index]
+                    let _url = _baseUrl + 'itemList'
+                    axios.get(_url,{params:{tabId:tab.tabId}}).then((resp) => {
+                        that.setState({
+                            itemList:resp.data && resp.data.itemList
+                        })
+                    })
+                }}/>
+            }
+            </div>
+        )
+    }
+
+    itemsListView() {
+        return (
+            <div style={{display:'flex',flexDirection:'column'}}>
+                {
+                    this.state.itemList && this.state.itemList.map((item, index) => {
+                        return (
+                            <div key={index} style={{display:'flex',flexDirection:'row',justifyContent:'space-between',margin:9}}>
+                                <div style={{display:'flex',flexDirection:'row'}}>
+                                    <div style={{color:'grey'}}>{index+1}，</div>
+                                    <a href="itms-services:///?action=download-manifest&url=https://172.31.38.78:3001/ipa/test.plist">{item.name}</a>
+                                </div>
+                                <div style={{color:'grey'}}>{item.timestamp}</div>
+                            </div>
+                        )
+                    })
+                }
+            </div>
+        )
     }
 
     render() {
-        let that = this
         return (
             <div style={{position:'absolute',width:'100%',height:'100%',backgroundColor:'#f9f9f9'}}>
-                {
-                    this.state.tabList && <TabBar tabList={this.state.tabList} onTabItemClicked={(index)=>{
-                        let tab = that.state.tabList[index]
-                        let url = 'http://172.31.38.78:3001/itemList'
-                        request.get(url,{params:{tabId:tab.tabId}}).then((resp) => {
-                            that.setState({
-                                itemList:resp.data && resp.data.itemList
-                            })
-                        })
-                    }}/>
-                }
-                <div style={{display:'flex',flexDirection:'column'}}>
-                    {
-                        this.state.itemList && this.state.itemList.map((item, index) => {
-                            return (
-                                    <div key={index} style={{display:'flex',flexDirection:'row',justifyContent:'space-between',margin:9}}>
-                                        <div style={{display:'flex',flexDirection:'row'}}>
-                                            <div style={{color:'grey'}}>{index+1}，</div>
-                                            <a href="itms-services:///?action=download-manifest&url=https://172.31.38.78:3001/ipa/test.plist">{item.name}</a>
-                                        </div>
-                                        <div style={{color:'grey'}}>{item.timestamp}</div>
-                                    </div>
-                            )
-                        })
-                    }
-                </div>
+                {!this.state.isError && this.topTabBarView()}
+                {!this.state.isError && this.state.itemList && this.itemsListView()}
+
+                <a href='itms-services:///?action=download-manifest&url=https://raw.githubusercontent.com/NJQter/NJQter.github.io/master/test.plist'>ipa</a>
+
             </div>
         )
     }
